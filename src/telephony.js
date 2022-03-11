@@ -11,7 +11,7 @@ const logger = winston.createLogger({
  
  module.exports.handler = async (event) => {
     var payload = JSON.parse(event.body)
-
+    logger.info(payload)
     if(payload.data.messageProfile.deliveryChannel != "SMS"){
         return {
             statusCode: 200,
@@ -31,14 +31,21 @@ const logger = winston.createLogger({
         }
     )
 
-    if(result.data === '1: Authentication error'){
-        var msg = "Service failed to perform due to authentication error."
-        logger.error("Service failed to perform due to authentication error.")
-        return {
-            statusCode: 200,
-            body: JSON.stringify(buildErrorPayload(msg))
-        }
-    }
+    // message status codes
+    // <status no>:<no of credits used> <description> 
+    // 0:  SMS successfully queued
+    // 1:  Authentication error
+    // 2:  Destination number(s) error
+    // 3:  From error
+    // 4:  Group not recognised
+    // 5:  Message error
+    // 6:  Send time error (YYYY-MM-DD HH:MM)
+    // 7:  Insufficient credit
+    // 8:  Invalid delivery receipt URL
+    // 9:  Sub-account error (not recognised)
+    // 10:  Repeat expiry/interval error (not recognised)
+    // 11:  Repeat expiry error (YYYY-MM-DD)
+    // 12:  Message loop detected
 
     if(result.data === '0:1 SMS successfully queued'){
         return {
