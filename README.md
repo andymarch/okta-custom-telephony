@@ -2,7 +2,8 @@
 
 This project is an example implementing Okta's custom telephony inline hook.
 
- :construction: This feature is currently in beta and will require Okta to enable on your tenant :construction:
+> :construction: ⚠️ This feature is currently in `beta` and will require Okta Support to enable on your tenant. :warning: :construction:
+
 
 *Documentation* https://developer.okta.com/docs/reference/telephony-hook/
 
