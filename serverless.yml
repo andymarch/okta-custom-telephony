@@ -16,8 +16,9 @@ provider:
           - $request.header.Authorization
   environment:
     FIXED_AUTH_SECRET: ${param:fixed-secret}
-    FIRETEXT_KEY: ${param:firetext-api-key}
+    FIRETEXT_KEY: ${param:firetext-api-key, 'not-set'}
     SENDER_ID: ${param:sender_id}
+    LOG_LEVEL: ${param:log_level, 'info'}
 
 
 functions:

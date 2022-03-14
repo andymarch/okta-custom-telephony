@@ -2,7 +2,7 @@ const { default: axios } = require("axios");
 const winston = require("winston");
 
 const logger = winston.createLogger({
-    level: process.env.LOG_LEVEL || 'info',
+    level: process.env.LOG_LEVEL,
     format: winston.format.json(),
     transports: [
         new winston.transports.Console(),
@@ -11,11 +11,13 @@ const logger = winston.createLogger({
  
  module.exports.handler = async (event) => {
     var payload = JSON.parse(event.body)
-    logger.info(payload)
+    logger.defaultMeta = {eventId: payload.eventId, oktaTransactionId: payload.data.context.request.id}
+
     if(payload.data.messageProfile.deliveryChannel != "SMS"){
+        logger.error("Unable to deliver non-SMS delivery channel messages.")
         return {
             statusCode: 200,
-            body: JSON.stringify(buildErrorPayload("Non-SMS delivery channel not supported."))
+            body: JSON.stringify(buildErrorPayload(payload.data.userProfile.login, "Non-SMS delivery channel not supported."))
         }
     }
 
@@ -26,7 +28,7 @@ const logger = winston.createLogger({
                 apiKey: process.env.FIRETEXT_KEY,
                 message: payload.data.messageProfile.msgTemplate,
                 from: process.env.SENDER_ID,
-                to: payload.data.messageProfile.phoneNumber.replace('+','')
+                to: payload.data.messageProfile.phoneNumber.replace('+','')//firetext does not handle + char
             }
         }
     )
@@ -47,20 +49,22 @@ const logger = winston.createLogger({
     // 11:  Repeat expiry error (YYYY-MM-DD)
     // 12:  Message loop detected
 
-    if(result.data === '0:1 SMS successfully queued'){
+    if(result.data.startsWith("0")){
+        logger.debug("Successfully delivered",{providerResponse: result.data})
         return {
             statusCode: 200,
-            body: JSON.stringify(buildSuccessPayload('Firetext'))
+            body: JSON.stringify(buildSuccessPayload('Firetext',result.data))
         }
     }
 
+    logger.warn("Unexpected response from provider",{providerResponse: result.data})
     return {
         statusCode: 200,
-        body: JSON.stringify(buildErrorPayload(result.data))
+        body: JSON.stringify(buildErrorPayload(payload.data.userProfile.login, result.data))
     }
  }
 
- function buildSuccessPayload(provider){
+ function buildSuccessPayload(provider,meta){
     return {
         "commands":[
             {
@@ -69,6 +73,7 @@ const logger = winston.createLogger({
                  {
                     "status":"SUCCESSFUL",
                     "provider":provider,
+                    "transactionMetadata": meta
                  }
               ]
             }
@@ -76,10 +81,10 @@ const logger = winston.createLogger({
    }
 }
 
- function buildErrorPayload(reason){
+ function buildErrorPayload(userid, reason){
      return {
         "error":{
-           "errorSummary":"Unable to perform",
+           "errorSummary":"Failed to deliver OTP to "+userid,
            "errorCauses":[
               {
                  "errorSummary":"Unable to perform.",
