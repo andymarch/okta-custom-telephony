@@ -7,6 +7,11 @@ This project is an example implementing Okta's custom telephony inline hook.
 
 *Documentation* https://developer.okta.com/docs/reference/telephony-hook/
 
+### Pre-requirments
+- [Serverless Framework](https://www.serverless.com/).
+- Okta [tenant](https://developer.okta.com/signup/) with beta feature enable.
+- Firetext [account](https://www.firetext.co.uk/).
+
 ### Implemented Providers
 - Firetext
 
